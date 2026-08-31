@@ -1,0 +1,31 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "EC2Recovery",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeInstances",
+                "ec2:RebootInstances"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ServiceRecovery",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:SendCommand",
+                "ssm:GetCommandInvocation"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SNSNotification",
+            "Effect": "Allow",
+            "Action": [
+                "sns:Publish"
+            ],
+            "Resource": "YOUR_SNS_TOPIC_ARN"
+        }
+    ]
+}

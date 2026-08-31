@@ -1,0 +1,11 @@
+{
+    "AlarmName": "EC2AutoHealer-HealthCheck",
+    "MetricName": "EC2Health",
+    "Namespace": "EC2AutoHealer",
+    "Statistic": "Minimum",
+    "Period": 60,
+    "EvaluationPeriods": 1,
+    "Threshold": 1,
+    "ComparisonOperator": "LessThanThreshold",
+    "TreatMissingData": "notBreaching"
+}

@@ -1,0 +1,30 @@
+# AWS credentials
+.aws/
+*.pem
+*.key
+credentials
+config
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+
+# Terraform state, if added later
+.terraform/
+*.tfstate
+*.tfstate.*
