@@ -1,0 +1,180 @@
+name: EC2 Auto-Healer CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  issues:
+    types:
+      - opened
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  code-quality:
+    name: Code Quality & Validation
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # -----------------------------------
+      # 1. Checkout repository
+      # -----------------------------------
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # -----------------------------------
+      # 2. Setup Python
+      # -----------------------------------
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      # -----------------------------------
+      # 3. Validate Python syntax
+      # -----------------------------------
+
+      - name: Validate Lambda Python syntax
+        run: |
+          python -m py_compile lambda/lambda_function.py
+
+      # -----------------------------------
+      # 4. Install ShellCheck
+      # -----------------------------------
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      # -----------------------------------
+      # 5. Validate Bash script
+      # -----------------------------------
+
+      - name: Run ShellCheck
+        run: |
+          shellcheck bash/health_check.sh
+
+      # -----------------------------------
+      # 6. Validate JSON files
+      # -----------------------------------
+
+      - name: Validate JSON files
+        run: |
+          python -m json.tool cloudwatch/alarm-config.json > /dev/null
+          python -m json.tool eventbridge/event-pattern.json > /dev/null
+          python -m json.tool iam/ec2-policy.json > /dev/null
+          python -m json.tool iam/lambda-policy.json > /dev/null
+
+      # -----------------------------------
+      # 7. Verify required project files
+      # -----------------------------------
+
+      - name: Verify project structure
+        run: |
+          test -f README.md
+          test -f LICENSE
+          test -f .gitignore
+          test -f bash/health_check.sh
+          test -f lambda/lambda_function.py
+          test -f lambda/README.md
+          test -f cloudwatch/alarm-config.json
+          test -f eventbridge/event-pattern.json
+          test -f iam/ec2-policy.json
+          test -f iam/lambda-policy.json
+
+      # -----------------------------------
+      # 8. Security check
+      # -----------------------------------
+
+      - name: Check for AWS credentials
+        run: |
+          if grep -R -n -E \
+            "AKIA[0-9A-Z]{16}|aws_access_key_id|aws_secret_access_key" \
+            . \
+            --exclude-dir=.git; then
+
+            echo "Potential AWS credentials detected!"
+            exit 1
+
+          else
+
+            echo "No AWS credentials detected."
+
+          fi
+
+      # -----------------------------------
+      # 9. Final result
+      # -----------------------------------
+
+      - name: CI completed
+        run: |
+          echo "===================================="
+          echo " EC2 AUTO-HEALER CI PASSED"
+          echo "===================================="
+  issue-management:
+    name: Issue Management
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+
+    steps:
+
+      - name: Display issue information
+        run: |
+          echo "===================================="
+          echo " New Issue Detected"
+          echo "===================================="
+          echo "Issue Number: #${{ github.event.issue.number }}"
+          echo "Title: ${{ github.event.issue.title }}"
+          echo "Author: ${{ github.event.issue.user.login }}"
+
+      - name: Add bug label
+        if: contains(github.event.issue.title, 'bug') || contains(github.event.issue.title, 'Bug')
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['bug']
+            });
+
+      - name: Add enhancement label
+        if: contains(github.event.issue.title, 'feature') || contains(github.event.issue.title, 'Feature')
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['enhancement']
+            });
+
+      - name: Comment on new issue
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '👋 Thanks for opening this issue! The EC2 Auto-Healer GitHub Actions pipeline has detected it and recorded the issue.'
+            });
