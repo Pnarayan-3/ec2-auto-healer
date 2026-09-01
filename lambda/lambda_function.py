@@ -117,7 +117,7 @@ def lambda_handler(event, context):
     print("====================================")
 
     print(f"Instance: {INSTANCE_ID}")
-    print("Recovery workflow started")
+    print("Recovery Workflow Started")
 
     print("Received event:")
     print(json.dumps(event))
