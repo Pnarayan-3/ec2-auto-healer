@@ -105,7 +105,8 @@ jobs:
           if grep -R -n -E \
             "AKIA[0-9A-Z]{16}|aws_access_key_id|aws_secret_access_key" \
             . \
-            --exclude-dir=.git; then
+            --exclude-dir=.git \
+            --exclude-dir=.github; then
 
             echo "Potential AWS credentials detected!"
             exit 1
