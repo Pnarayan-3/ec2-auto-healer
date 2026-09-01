@@ -15,7 +15,7 @@ INSTANCE_ID = os.environ["INSTANCE_ID"]
 SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
 
 
-def send_notification(subject, message)
+def send_notification(subject, message):
 
     sns.publish(
         TopicArn=SNS_TOPIC_ARN,
